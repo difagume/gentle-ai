@@ -40,20 +40,8 @@ func TestAllEmbeddedAssetsAreReadable(t *testing.T) {
 		"skills/_shared/engram-convention.md",
 		"skills/_shared/openspec-convention.md",
 
-		// Framework/coding skills
-		"skills/ai-sdk-5/SKILL.md",
-		"skills/django-drf/SKILL.md",
+		// Foundation skills
 		"skills/go-testing/SKILL.md",
-		"skills/nextjs-15/SKILL.md",
-		"skills/playwright/SKILL.md",
-		"skills/pytest/SKILL.md",
-		"skills/react-19/SKILL.md",
-		"skills/tailwind-4/SKILL.md",
-		"skills/typescript/SKILL.md",
-		"skills/zod-4/SKILL.md",
-		"skills/zustand-5/SKILL.md",
-		"skills/angular/SKILL.md",
-		"skills/dotnet/SKILL.md",
 		"skills/skill-creator/SKILL.md",
 	}
 
@@ -105,9 +93,9 @@ func TestEmbeddedAssetCount(t *testing.T) {
 		}
 	}
 
-	// We expect 24 skill directories (9 SDD + 14 framework/coding/testing/workflow + _shared).
-	if skillDirs != 24 {
-		t.Fatalf("expected 24 skill directories, got %d", skillDirs)
+	// We expect 12 skill directories (9 SDD + 2 foundation + _shared).
+	if skillDirs != 12 {
+		t.Fatalf("expected 12 skill directories, got %d", skillDirs)
 	}
 
 	// Verify each skill directory has a SKILL.md.

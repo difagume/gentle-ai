@@ -109,10 +109,10 @@ func TestResolveAgentInstall(t *testing.T) {
 			want:    CommandSequence{{"sudo", "npm", "install", "-g", "opencode-ai"}},
 		},
 		{
-			name:    "opencode on arch uses pacman",
+			name:    "opencode on arch uses npm install",
 			profile: system.PlatformProfile{OS: "linux", LinuxDistro: system.LinuxDistroArch, PackageManager: "pacman"},
 			agent:   model.AgentOpenCode,
-			want:    CommandSequence{{"sudo", "pacman", "-S", "--noconfirm", "opencode"}},
+			want:    CommandSequence{{"sudo", "npm", "install", "-g", "opencode-ai"}},
 		},
 		{
 			name:    "unsupported agent returns error",

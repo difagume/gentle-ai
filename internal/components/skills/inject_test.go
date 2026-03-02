@@ -20,7 +20,7 @@ func opencodeAdapter() agents.Adapter { return opencode.NewAdapter() }
 func TestInjectWritesSkillFilesForOpenCode(t *testing.T) {
 	home := t.TempDir()
 
-	result, err := Inject(home, opencodeAdapter(), []model.SkillID{model.SkillTypeScript})
+	result, err := Inject(home, opencodeAdapter(), []model.SkillID{model.SkillCreator})
 	if err != nil {
 		t.Fatalf("Inject() error = %v", err)
 	}
@@ -32,7 +32,7 @@ func TestInjectWritesSkillFilesForOpenCode(t *testing.T) {
 		t.Fatalf("Inject() files len = %d", len(result.Files))
 	}
 
-	path := filepath.Join(home, ".config", "opencode", "skill", "typescript", "SKILL.md")
+	path := filepath.Join(home, ".config", "opencode", "skill", "skill-creator", "SKILL.md")
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("expected skill file %q: %v", path, err)
 	}
@@ -46,7 +46,7 @@ func TestInjectWritesSkillFilesForOpenCode(t *testing.T) {
 	}
 
 	// Idempotent: second inject should not change.
-	second, err := Inject(home, opencodeAdapter(), []model.SkillID{model.SkillTypeScript})
+	second, err := Inject(home, opencodeAdapter(), []model.SkillID{model.SkillCreator})
 	if err != nil {
 		t.Fatalf("Inject() second error = %v", err)
 	}
@@ -59,7 +59,7 @@ func TestInjectWritesSkillFilesForOpenCode(t *testing.T) {
 func TestInjectWritesSkillFilesForClaude(t *testing.T) {
 	home := t.TempDir()
 
-	result, err := Inject(home, claudeAdapter(), []model.SkillID{model.SkillReact19, model.SkillSDDInit})
+	result, err := Inject(home, claudeAdapter(), []model.SkillID{model.SkillCreator, model.SkillSDDInit})
 	if err != nil {
 		t.Fatalf("Inject() error = %v", err)
 	}
@@ -71,7 +71,7 @@ func TestInjectWritesSkillFilesForClaude(t *testing.T) {
 		t.Fatalf("Inject() files len = %d, want 2", len(result.Files))
 	}
 
-	for _, id := range []model.SkillID{model.SkillReact19, model.SkillSDDInit} {
+	for _, id := range []model.SkillID{model.SkillCreator, model.SkillSDDInit} {
 		path := filepath.Join(home, ".claude", "skills", string(id), "SKILL.md")
 		if _, err := os.Stat(path); err != nil {
 			t.Fatalf("expected skill file %q: %v", path, err)
@@ -83,7 +83,7 @@ func TestInjectSkipsUnknownSkillGracefully(t *testing.T) {
 	home := t.TempDir()
 
 	result, err := Inject(home, opencodeAdapter(), []model.SkillID{
-		model.SkillTypeScript,
+		model.SkillCreator,
 		model.SkillID("nonexistent-skill"),
 	})
 	if err != nil {
@@ -137,7 +137,7 @@ func TestInjectSkipsUnsupportedAgent(t *testing.T) {
 	home := t.TempDir()
 
 	// Mock adapter that does not support skills — Inject should skip gracefully.
-	result, injectErr := Inject(home, noSkillsAdapter{}, []model.SkillID{model.SkillTypeScript})
+	result, injectErr := Inject(home, noSkillsAdapter{}, []model.SkillID{model.SkillCreator})
 	if injectErr != nil {
 		t.Fatalf("Inject() unexpected error = %v", injectErr)
 	}
@@ -156,7 +156,7 @@ func TestInjectVSCodeWritesSkillFiles(t *testing.T) {
 
 	adapter := vscode.NewAdapter()
 
-	result, err := Inject(home, adapter, []model.SkillID{model.SkillTypeScript})
+	result, err := Inject(home, adapter, []model.SkillID{model.SkillCreator})
 	if err != nil {
 		t.Fatalf("Inject(vscode) error = %v", err)
 	}
@@ -167,7 +167,7 @@ func TestInjectVSCodeWritesSkillFiles(t *testing.T) {
 		t.Fatalf("Inject(vscode) files len = %d, want 1", len(result.Files))
 	}
 
-	path := filepath.Join(home, ".copilot", "skills", "typescript", "SKILL.md")
+	path := filepath.Join(home, ".copilot", "skills", "skill-creator", "SKILL.md")
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("expected skill file %q: %v", path, err)
 	}
@@ -176,12 +176,12 @@ func TestInjectVSCodeWritesSkillFiles(t *testing.T) {
 func TestInjectUsesRealEmbeddedContent(t *testing.T) {
 	home := t.TempDir()
 
-	_, err := Inject(home, claudeAdapter(), []model.SkillID{model.SkillTypeScript})
+	_, err := Inject(home, claudeAdapter(), []model.SkillID{model.SkillCreator})
 	if err != nil {
 		t.Fatalf("Inject() error = %v", err)
 	}
 
-	path := filepath.Join(home, ".claude", "skills", "typescript", "SKILL.md")
+	path := filepath.Join(home, ".claude", "skills", "skill-creator", "SKILL.md")
 	content, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("ReadFile() error = %v", err)
@@ -194,14 +194,14 @@ func TestInjectUsesRealEmbeddedContent(t *testing.T) {
 }
 
 func TestSkillPathForAgent(t *testing.T) {
-	path := SkillPathForAgent("/home/test", claudeAdapter(), model.SkillTypeScript)
-	want := "/home/test/.claude/skills/typescript/SKILL.md"
+	path := SkillPathForAgent("/home/test", claudeAdapter(), model.SkillCreator)
+	want := "/home/test/.claude/skills/skill-creator/SKILL.md"
 	if path != want {
 		t.Fatalf("SkillPathForAgent() = %q, want %q", path, want)
 	}
 
-	path = SkillPathForAgent("/home/test", opencodeAdapter(), model.SkillReact19)
-	want = "/home/test/.config/opencode/skill/react-19/SKILL.md"
+	path = SkillPathForAgent("/home/test", opencodeAdapter(), model.SkillCreator)
+	want = "/home/test/.config/opencode/skill/skill-creator/SKILL.md"
 	if path != want {
 		t.Fatalf("SkillPathForAgent() = %q, want %q", path, want)
 	}

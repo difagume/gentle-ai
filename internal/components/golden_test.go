@@ -268,7 +268,7 @@ func TestGoldenEngram_OpenCode(t *testing.T) {
 func TestGoldenSkills_Claude(t *testing.T) {
 	home := t.TempDir()
 
-	skillIDs := []model.SkillID{model.SkillTypeScript, model.SkillReact19}
+	skillIDs := []model.SkillID{model.SkillGoTesting, model.SkillCreator}
 	result, err := skills.Inject(home, claudeAdapter(), skillIDs)
 	if err != nil {
 		t.Fatalf("skills.Inject(claude) error = %v", err)
@@ -277,17 +277,17 @@ func TestGoldenSkills_Claude(t *testing.T) {
 		t.Fatalf("skills.Inject(claude) changed = false")
 	}
 
-	tsSkill := readTestFile(t, filepath.Join(home, ".claude", "skills", "typescript", "SKILL.md"))
-	assertGolden(t, "skills-claude-typescript.golden", tsSkill)
+	goTestingSkill := readTestFile(t, filepath.Join(home, ".claude", "skills", "go-testing", "SKILL.md"))
+	assertGolden(t, "skills-claude-go-testing.golden", goTestingSkill)
 
-	reactSkill := readTestFile(t, filepath.Join(home, ".claude", "skills", "react-19", "SKILL.md"))
-	assertGolden(t, "skills-claude-react19.golden", reactSkill)
+	skillCreator := readTestFile(t, filepath.Join(home, ".claude", "skills", "skill-creator", "SKILL.md"))
+	assertGolden(t, "skills-claude-skill-creator.golden", skillCreator)
 }
 
 func TestGoldenSkills_OpenCode(t *testing.T) {
 	home := t.TempDir()
 
-	skillIDs := []model.SkillID{model.SkillTypeScript, model.SkillReact19}
+	skillIDs := []model.SkillID{model.SkillGoTesting, model.SkillCreator}
 	result, err := skills.Inject(home, opencodeAdapter(), skillIDs)
 	if err != nil {
 		t.Fatalf("skills.Inject(opencode) error = %v", err)
@@ -296,11 +296,11 @@ func TestGoldenSkills_OpenCode(t *testing.T) {
 		t.Fatalf("skills.Inject(opencode) changed = false")
 	}
 
-	tsSkill := readTestFile(t, filepath.Join(home, ".config", "opencode", "skill", "typescript", "SKILL.md"))
-	assertGolden(t, "skills-opencode-typescript.golden", tsSkill)
+	goTestingSkill := readTestFile(t, filepath.Join(home, ".config", "opencode", "skill", "go-testing", "SKILL.md"))
+	assertGolden(t, "skills-opencode-go-testing.golden", goTestingSkill)
 
-	reactSkill := readTestFile(t, filepath.Join(home, ".config", "opencode", "skill", "react-19", "SKILL.md"))
-	assertGolden(t, "skills-opencode-react19.golden", reactSkill)
+	skillCreator := readTestFile(t, filepath.Join(home, ".config", "opencode", "skill", "skill-creator", "SKILL.md"))
+	assertGolden(t, "skills-opencode-skill-creator.golden", skillCreator)
 }
 
 // ---------------------------------------------------------------------------

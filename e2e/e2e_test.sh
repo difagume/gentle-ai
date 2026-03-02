@@ -450,59 +450,49 @@ test_cc_skills_minimal() {
 }
 
 test_cc_skills_full() {
-    log_test "Claude Code: skills injection (full-gentleman = all 20 skills)"
+    log_test "Claude Code: skills injection (full-gentleman = 11 foundation skills)"
     cleanup_test_env
 
     if $BINARY install --agent claude-code --component skills --preset full-gentleman --persona neutral 2>&1; then
         local skills_dir="$HOME/.claude/skills"
         assert_dir_exists "$skills_dir" "Claude skills directory"
 
-        # Full preset = 20 skills (9 SDD + 6 framework + 5 extra)
-        assert_file_count "$skills_dir" "SKILL.md" 20 "Full preset: 20 skill files"
+        # Full preset = 11 skills (9 SDD + 2 foundation)
+        assert_file_count "$skills_dir" "SKILL.md" 11 "Full preset: 11 skill files"
 
-        # Verify framework skills exist
-        assert_file_exists "$skills_dir/typescript/SKILL.md" "typescript SKILL.md"
-        assert_file_exists "$skills_dir/react-19/SKILL.md" "react-19 SKILL.md"
-        assert_file_exists "$skills_dir/nextjs-15/SKILL.md" "nextjs-15 SKILL.md"
-        assert_file_exists "$skills_dir/tailwind-4/SKILL.md" "tailwind-4 SKILL.md"
-        assert_file_exists "$skills_dir/zustand-5/SKILL.md" "zustand-5 SKILL.md"
-        assert_file_exists "$skills_dir/zod-4/SKILL.md" "zod-4 SKILL.md"
-
-        # Verify extra skills
-        assert_file_exists "$skills_dir/ai-sdk-5/SKILL.md" "ai-sdk-5 SKILL.md"
-        assert_file_exists "$skills_dir/playwright/SKILL.md" "playwright SKILL.md"
-        assert_file_exists "$skills_dir/pytest/SKILL.md" "pytest SKILL.md"
-        assert_file_exists "$skills_dir/django-drf/SKILL.md" "django-drf SKILL.md"
+        # Verify foundation skills exist
         assert_file_exists "$skills_dir/go-testing/SKILL.md" "go-testing SKILL.md"
+        assert_file_exists "$skills_dir/skill-creator/SKILL.md" "skill-creator SKILL.md"
 
         # Real content check
-        assert_file_size_min "$skills_dir/typescript/SKILL.md" 200 "typescript skill has real content"
-        assert_file_size_min "$skills_dir/react-19/SKILL.md" 200 "react-19 skill has real content"
+        assert_file_size_min "$skills_dir/go-testing/SKILL.md" 200 "go-testing skill has real content"
+        assert_file_size_min "$skills_dir/skill-creator/SKILL.md" 200 "skill-creator skill has real content"
     else
         log_fail "skills (full) install command failed"
     fi
 }
 
 test_cc_skills_ecosystem() {
-    log_test "Claude Code: skills injection (ecosystem-only = 15 skills)"
+    log_test "Claude Code: skills injection (ecosystem-only = 11 foundation skills)"
     cleanup_test_env
 
     if $BINARY install --agent claude-code --component skills --preset ecosystem-only --persona neutral 2>&1; then
         local skills_dir="$HOME/.claude/skills"
         assert_dir_exists "$skills_dir" "Claude skills directory"
 
-        # ecosystem-only = 9 SDD + 6 framework = 15
-        assert_file_count "$skills_dir" "SKILL.md" 15 "Ecosystem preset: 15 skill files"
+        # ecosystem-only = 9 SDD + 2 foundation = 11
+        assert_file_count "$skills_dir" "SKILL.md" 11 "Ecosystem preset: 11 skill files"
 
         # SDD skills present
         assert_file_exists "$skills_dir/sdd-init/SKILL.md" "SDD skills present"
-        # Framework skills present
-        assert_file_exists "$skills_dir/typescript/SKILL.md" "Framework skills present"
-        # Extra skills NOT present
-        if [ -f "$skills_dir/playwright/SKILL.md" ]; then
-            log_fail "Ecosystem preset should NOT include playwright (extra skill)"
+        # Foundation skills present
+        assert_file_exists "$skills_dir/go-testing/SKILL.md" "Foundation skills present"
+        assert_file_exists "$skills_dir/skill-creator/SKILL.md" "skill-creator present"
+        # Stack-specific skills NOT present
+        if [ -f "$skills_dir/react-19/SKILL.md" ]; then
+            log_fail "Ecosystem preset should NOT include react-19"
         else
-            log_pass "Ecosystem preset correctly excludes extra skills"
+            log_pass "Ecosystem preset correctly excludes stack-specific skills"
         fi
     else
         log_fail "skills (ecosystem) install command failed"
@@ -645,16 +635,16 @@ test_oc_skills_minimal() {
 }
 
 test_oc_skills_full() {
-    log_test "OpenCode: skills injection (full-gentleman = all 20 skills)"
+    log_test "OpenCode: skills injection (full-gentleman = 11 foundation skills)"
     cleanup_test_env
 
     if $BINARY install --agent opencode --component skills --preset full-gentleman --persona neutral 2>&1; then
         local skill_dir="$HOME/.config/opencode/skill"
         assert_dir_exists "$skill_dir" "OpenCode skill directory"
-        assert_file_count "$skill_dir" "SKILL.md" 20 "Full preset: 20 skill files"
-        assert_file_exists "$skill_dir/typescript/SKILL.md" "typescript skill"
-        assert_file_exists "$skill_dir/react-19/SKILL.md" "react-19 skill"
-        assert_file_size_min "$skill_dir/typescript/SKILL.md" 200 "typescript skill has real content"
+        assert_file_count "$skill_dir" "SKILL.md" 11 "Full preset: 11 skill files"
+        assert_file_exists "$skill_dir/go-testing/SKILL.md" "go-testing skill"
+        assert_file_exists "$skill_dir/skill-creator/SKILL.md" "skill-creator skill"
+        assert_file_size_min "$skill_dir/go-testing/SKILL.md" 200 "go-testing skill has real content"
     else
         log_fail "OpenCode skills (full) install command failed"
     fi

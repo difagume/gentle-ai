@@ -159,28 +159,14 @@ All agents receive the **full SDD orchestrator** (agent-teams-lite) injected int
 | SDD Verify | `sdd-verify` | P0 |
 | SDD Archive | `sdd-archive` | P0 |
 
-### Coding
+### Foundation
 
 | Skill | ID | Priority |
 |-------|-----|----------|
-| TypeScript | `typescript` | P0 |
-| React 19 | `react-19` | P0 |
-| Next.js 15 | `nextjs-15` | P0 |
-| Tailwind CSS 4 | `tailwind-4` | P0 |
-| Zustand 5 | `zustand-5` | P1 |
-| Zod 4 | `zod-4` | P1 |
-| Vercel AI SDK 5 | `ai-sdk-5` | P1 |
-| Django REST Framework | `django-drf` | P1 |
+| Go Testing | `go-testing` | P0 |
+| Skill Creator | `skill-creator` | P0 |
 
-### Testing
-
-| Skill | ID | Priority |
-|-------|-----|----------|
-| Playwright | `playwright` | P1 |
-| Pytest | `pytest` | P1 |
-| Go Testing | `go-testing` | P1 |
-
-P0 skills are installed by default with the `full-gentleman` and `ecosystem-only` presets. P1 skills are included in `full-gentleman`.
+These foundation skills are installed by default with both `full-gentleman` and `ecosystem-only` presets.
 
 ---
 
@@ -232,7 +218,7 @@ gentle-ai install \
 gentle-ai install \
   --agent claude-code \
   --component engram,sdd,skills,context7,persona,permissions \
-  --skill typescript,react-19,nextjs-15 \
+  --skill go-testing,skill-creator \
   --persona gentleman
 
 # Dry-run first (preview plan without applying changes)

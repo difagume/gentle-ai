@@ -45,23 +45,14 @@ IMPORTANT: When you detect any of these contexts, IMMEDIATELY load the correspon
 
 ### Framework/Library Detection
 
-| Context                                | Skill to load    |
-| -------------------------------------- | ---------------- |
-| React components, hooks, JSX           | react-19         |
-| Next.js, app router, server components | nextjs-15        |
-| TypeScript types, interfaces, generics | typescript       |
-| Tailwind classes, styling              | tailwind-4       |
-| Zod schemas, validation                | zod-4            |
-| Zustand stores, state management       | zustand-5        |
-| AI SDK, Vercel AI, streaming           | ai-sdk-5         |
-| Django, DRF, Python API                | django-drf       |
-| Playwright tests, e2e                  | playwright       |
-| Pytest, Python testing                 | pytest           |
-| Go tests, Bubbletea TUI testing        | go-testing       |
+| Context                         | Skill to load |
+| ------------------------------- | ------------- |
+| Go tests, Bubbletea TUI testing | go-testing    |
+| Creating new AI skills          | skill-creator |
 
 ### How to use skills
 
 1. Detect context from user request or current file being edited
 2. Load the relevant skill(s) BEFORE writing code
 3. Apply ALL patterns and rules from the skill
-4. Multiple skills can apply (e.g., react-19 + typescript + tailwind-4)
+4. Multiple skills can apply when relevant

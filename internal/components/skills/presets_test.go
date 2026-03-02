@@ -22,22 +22,29 @@ func TestSkillsForPresetMinimalReturnsSDDOnly(t *testing.T) {
 func TestSkillsForPresetEcosystemIncludesFrameworks(t *testing.T) {
 	skills := SkillsForPreset(model.PresetEcosystemOnly)
 
-	hasTypescript := false
+	hasGoTesting := false
+	hasSkillCreator := false
 	hasSDDInit := false
 	for _, skill := range skills {
-		if skill == model.SkillTypeScript {
-			hasTypescript = true
+		if skill == model.SkillGoTesting {
+			hasGoTesting = true
+		}
+		if skill == model.SkillCreator {
+			hasSkillCreator = true
 		}
 		if skill == model.SkillSDDInit {
 			hasSDDInit = true
 		}
 	}
 
-	if !hasTypescript {
-		t.Fatalf("ecosystem preset should include typescript")
+	if !hasGoTesting {
+		t.Fatalf("ecosystem preset should include go-testing")
 	}
 	if !hasSDDInit {
 		t.Fatalf("ecosystem preset should include sdd-init")
+	}
+	if !hasSkillCreator {
+		t.Fatalf("ecosystem preset should include skill-creator")
 	}
 }
 
@@ -62,9 +69,8 @@ func TestAllSkillIDsIncludesEveryKnownSkill(t *testing.T) {
 
 	required := []model.SkillID{
 		model.SkillSDDInit,
-		model.SkillTypeScript,
-		model.SkillPlaywright,
 		model.SkillGoTesting,
+		model.SkillCreator,
 	}
 
 	skillSet := make(map[model.SkillID]struct{}, len(all))

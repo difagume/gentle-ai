@@ -78,9 +78,8 @@ func (profileResolver) ResolveDependencyInstall(profile system.PlatformProfile, 
 }
 
 // resolveOpenCodeInstall returns the correct install command sequence for OpenCode per platform.
-// - darwin: brew tap + brew install (via anomalyco/tap — official OpenCode tap)
-// - arch: pacman -S opencode (available in extra/)
-// - ubuntu/debian: npm install -g opencode-ai (official npm package)
+// - darwin: brew install anomalyco/tap/opencode (official OpenCode tap)
+// - linux: npm install -g opencode-ai (official npm package)
 // See https://opencode.ai/docs for official install methods.
 func resolveOpenCodeInstall(profile system.PlatformProfile) (CommandSequence, error) {
 	switch profile.PackageManager {
@@ -88,9 +87,7 @@ func resolveOpenCodeInstall(profile system.PlatformProfile) (CommandSequence, er
 		return CommandSequence{
 			{"brew", "install", "anomalyco/tap/opencode"},
 		}, nil
-	case "pacman":
-		return CommandSequence{{"sudo", "pacman", "-S", "--noconfirm", "opencode"}}, nil
-	case "apt":
+	case "apt", "pacman":
 		return CommandSequence{{"sudo", "npm", "install", "-g", "opencode-ai"}}, nil
 	default:
 		return nil, fmt.Errorf(

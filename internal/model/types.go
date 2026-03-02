@@ -47,7 +47,6 @@ const (
 	SkillSDDDesign  SkillID = "sdd-design"
 	SkillSDDTasks   SkillID = "sdd-tasks"
 	SkillSDDArchive SkillID = "sdd-archive"
-	SkillTypeScript SkillID = "typescript"
 	SkillReact19    SkillID = "react-19"
 	SkillNextJS15   SkillID = "nextjs-15"
 	SkillTailwind4  SkillID = "tailwind-4"
@@ -58,6 +57,7 @@ const (
 	SkillPytest     SkillID = "pytest"
 	SkillDjangoDRF  SkillID = "django-drf"
 	SkillGoTesting  SkillID = "go-testing"
+	SkillCreator    SkillID = "skill-creator"
 )
 
 type PersonaID string
