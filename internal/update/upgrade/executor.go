@@ -301,6 +301,20 @@ func Execute(ctx context.Context, results []update.UpdateResult, profile system.
 		msg := fmt.Sprintf("Upgrading %s via %s (%s → %s)", r.Tool.Name, method, r.InstalledVersion, r.LatestVersion)
 		sp := NewSpinner(pw, msg)
 		toolResult := executeOne(ctx, r, profile, dryRun)
+
+		// Check if the upgrade succeeded but requires immediate exit (Windows self-replace).
+		// This must be handled BEFORE calling sp.Finish() so the spinner can terminate properly.
+		if toolResult.Status == UpgradeSucceeded && NeedsExitAfterSuccess {
+			// Finish the spinner with success before exiting.
+			sp.Finish(true)
+			// Reset the flag.
+			NeedsExitAfterSuccess = false
+			// Exit immediately to release file locks so the installer can replace the binary.
+			os.Exit(0)
+			// Unreachable, but return to satisfy the compiler.
+			return UpgradeReport{}
+		}
+
 		switch toolResult.Status {
 		case UpgradeSucceeded:
 			sp.Finish(true)
@@ -367,6 +381,10 @@ func executeOne(ctx context.Context, r update.UpdateResult, profile system.Platf
 func effectiveMethod(tool update.ToolInfo, profile system.PlatformProfile) update.InstallMethod {
 	if profile.PackageManager == "brew" {
 		return update.InstallBrew
+	}
+	// Use installer method for gentle-ai on Windows (launches PowerShell installer).
+	if profile.OS == "windows" && tool.Name == "gentle-ai" {
+		return update.InstallInstaller
 	}
 	return tool.InstallMethod
 }
