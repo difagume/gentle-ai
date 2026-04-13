@@ -3,16 +3,31 @@ package upgrade
 import (
 	"context"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os/exec"
+	"runtime"
+	"strings"
 	"testing"
 	"github.com/gentleman-programming/gentle-ai/internal/system"
 	"github.com/gentleman-programming/gentle-ai/internal/update"
 )
 
-var testWriter io.Writer = io.Discard
+// --- Helpers for cross-platform exec mocks ---
+// dummyPassCommand returns a command that succeeds and outputs the given text.
+func dummyPassCommand(text string) *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.Command("cmd", "/c", "echo "+text)
+	}
+	return exec.Command("echo", text)
+}
+
+func dummyFailCommand() *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.Command("cmd", "/c", "exit 1")
+	}
+	return exec.Command("false")
+}
 
 // --- TestRunStrategy_BrewUpgrade ---
 
@@ -25,7 +40,7 @@ func TestRunStrategy_BrewUpgrade(t *testing.T) {
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		gotName = name
 		gotArgs = args
-		return exec.Command("echo", "Upgraded engram")
+		return dummyPassCommand("Upgraded engram")
 	}
 
 	r := update.UpdateResult{
@@ -37,7 +52,7 @@ func TestRunStrategy_BrewUpgrade(t *testing.T) {
 	}
 	profile := system.PlatformProfile{OS: "darwin", PackageManager: "brew"}
 
-	err := runStrategy(context.Background(), r, profile)
+	_, err := runStrategy(context.Background(), r, profile)
 	if err != nil {
 		t.Fatalf("runStrategy brew: unexpected error: %v", err)
 	}
@@ -61,7 +76,7 @@ func TestRunStrategy_GoInstallUpgrade(t *testing.T) {
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		gotName = name
 		gotArgs = args
-		return exec.Command("echo", "go install ok")
+		return dummyPassCommand("go install ok")
 	}
 
 	r := update.UpdateResult{
@@ -74,7 +89,7 @@ func TestRunStrategy_GoInstallUpgrade(t *testing.T) {
 	}
 	profile := system.PlatformProfile{OS: "linux", PackageManager: "apt"}
 
-	err := runStrategy(context.Background(), r, profile)
+	_, err := runStrategy(context.Background(), r, profile)
 	if err != nil {
 		t.Fatalf("runStrategy go-install: unexpected error: %v", err)
 	}
@@ -102,7 +117,7 @@ func TestRunStrategy_GoInstallMissingImportPath(t *testing.T) {
 	}
 	profile := system.PlatformProfile{OS: "linux", PackageManager: "apt"}
 
-	err := runStrategy(context.Background(), r, profile)
+	_, err := runStrategy(context.Background(), r, profile)
 	if err == nil {
 		t.Errorf("expected error when GoImportPath is empty, got nil")
 	}
@@ -120,7 +135,7 @@ func TestRunStrategy_UnsupportedMethodManualFallback(t *testing.T) {
 	}
 	profile := system.PlatformProfile{OS: "linux", PackageManager: "apt"}
 
-	err := runStrategy(context.Background(), r, profile)
+	_, err := runStrategy(context.Background(), r, profile)
 	// Unsupported method → manual fallback error.
 	if err == nil {
 		t.Errorf("expected error for unsupported install method, got nil")
@@ -134,7 +149,7 @@ func TestRunStrategy_BrewUpgradeFailure(t *testing.T) {
 	t.Cleanup(func() { execCommand = origExecCommand })
 
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		return exec.Command("false") // always fails
+		return dummyFailCommand() // always fails
 	}
 
 	r := update.UpdateResult{
@@ -146,7 +161,7 @@ func TestRunStrategy_BrewUpgradeFailure(t *testing.T) {
 	}
 	profile := system.PlatformProfile{OS: "darwin", PackageManager: "brew"}
 
-	err := runStrategy(context.Background(), r, profile)
+	_, err := runStrategy(context.Background(), r, profile)
 	if err == nil {
 		t.Errorf("expected error when brew upgrade fails, got nil")
 	}
@@ -159,7 +174,7 @@ func TestRunStrategy_GoInstallFailure(t *testing.T) {
 	t.Cleanup(func() { execCommand = origExecCommand })
 
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		return exec.Command("false")
+		return dummyFailCommand()
 	}
 
 	r := update.UpdateResult{
@@ -172,7 +187,7 @@ func TestRunStrategy_GoInstallFailure(t *testing.T) {
 	}
 	profile := system.PlatformProfile{OS: "linux", PackageManager: "apt"}
 
-	err := runStrategy(context.Background(), r, profile)
+	_, err := runStrategy(context.Background(), r, profile)
 	if err == nil {
 		t.Errorf("expected error when go install fails, got nil")
 	}
@@ -343,7 +358,7 @@ func TestBrewUpgrade_RunsUpdateBeforeUpgrade(t *testing.T) {
 		if name == "brew" && len(args) > 0 {
 			callOrder = append(callOrder, args[0]) // "update" or "upgrade"
 		}
-		return exec.Command("echo", "ok")
+		return dummyPassCommand("ok")
 	}
 
 	err := brewUpgrade(context.Background(), "gentle-ai")
@@ -377,11 +392,11 @@ func TestBrewUpgrade_UpdateFailureIsNonFatal(t *testing.T) {
 			callArgs = append(callArgs, args[0])
 			if args[0] == "update" {
 				// brew update fails (e.g. no network).
-				return exec.Command("false")
+				return dummyFailCommand()
 			}
 		}
 		// brew upgrade succeeds.
-		return exec.Command("echo", "Upgraded gentle-ai")
+		return dummyPassCommand("Upgraded gentle-ai")
 	}
 
 	err := brewUpgrade(context.Background(), "gentle-ai")
@@ -408,7 +423,7 @@ func TestRunStrategy_ExecErrorWrapped(t *testing.T) {
 	t.Cleanup(func() { execCommand = origExecCommand })
 
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		return exec.Command("false")
+		return dummyFailCommand()
 	}
 
 	r := update.UpdateResult{
@@ -420,7 +435,7 @@ func TestRunStrategy_ExecErrorWrapped(t *testing.T) {
 	}
 	profile := system.PlatformProfile{OS: "darwin", PackageManager: "brew"}
 
-	err := runStrategy(context.Background(), r, profile)
+	_, err := runStrategy(context.Background(), r, profile)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -470,7 +485,7 @@ func TestRunStrategy_ScriptUpgradeSuccess(t *testing.T) {
 		if name == "bash" && len(args) >= 2 && args[0] == "-c" {
 			gotScriptContent = args[1]
 		}
-		return exec.Command("echo", "ok")
+		return dummyPassCommand("ok")
 	}
 
 	r := update.UpdateResult{
@@ -540,7 +555,7 @@ func TestRunStrategy_ScriptUpgradeWindowsManualFallback(t *testing.T) {
 	execCalled := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		execCalled = true
-		return exec.Command("echo", "should not run")
+		return dummyPassCommand("should not run")
 	}
 
 	r := update.UpdateResult{
@@ -587,7 +602,7 @@ func TestGGAScriptUpgradeUsesGitClone(t *testing.T) {
 
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		calls = append(calls, call{name: name, args: args})
-		return exec.Command("echo", "ok")
+		return dummyPassCommand("ok")
 	}
 
 	r := update.UpdateResult{
@@ -658,7 +673,7 @@ func TestGGAScriptUpgradeWindowsManualFallback(t *testing.T) {
 	execCalled := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		execCalled = true
-		return exec.Command("echo", "should not run")
+		return dummyPassCommand("should not run")
 	}
 
 	r := update.UpdateResult{
@@ -706,7 +721,7 @@ func TestRunStrategy_GGAUsesGitClone(t *testing.T) {
 
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		calls = append(calls, call{name: name, args: args})
-		return exec.Command("echo", "ok")
+		return dummyPassCommand("ok")
 	}
 
 	r := update.UpdateResult{
@@ -720,7 +735,7 @@ func TestRunStrategy_GGAUsesGitClone(t *testing.T) {
 	}
 	profile := system.PlatformProfile{OS: "linux", PackageManager: "apt"}
 
-	err := runStrategy(context.Background(), r, profile)
+	_, err := runStrategy(context.Background(), r, profile)
 	if err != nil {
 		t.Fatalf("runStrategy GGA: unexpected error: %v", err)
 	}
@@ -759,7 +774,7 @@ func TestEngramUpgradeUsesDownloadNotGoInstall(t *testing.T) {
 	execCalled := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		execCalled = true
-		return exec.Command("echo", "should not be called")
+		return dummyPassCommand("should not be called")
 	}
 
 	downloadCalled := false
@@ -779,7 +794,7 @@ func TestEngramUpgradeUsesDownloadNotGoInstall(t *testing.T) {
 	}
 	profile := system.PlatformProfile{OS: "windows", PackageManager: "winget"}
 
-	err := runStrategy(context.Background(), r, profile)
+	_, err := runStrategy(context.Background(), r, profile)
 	if err != nil {
 		t.Fatalf("runStrategy engram windows: unexpected error: %v", err)
 	}
@@ -808,7 +823,7 @@ func TestEngramUpgradeLinuxUsesDownload(t *testing.T) {
 	execCalled := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		execCalled = true
-		return exec.Command("echo", "should not be called")
+		return dummyPassCommand("should not be called")
 	}
 
 	downloadCalled := false
@@ -828,7 +843,7 @@ func TestEngramUpgradeLinuxUsesDownload(t *testing.T) {
 	}
 	profile := system.PlatformProfile{OS: "linux", PackageManager: "apt"}
 
-	err := runStrategy(context.Background(), r, profile)
+	_, err := runStrategy(context.Background(), r, profile)
 	if err != nil {
 		t.Fatalf("runStrategy engram linux: unexpected error: %v", err)
 	}
@@ -864,7 +879,7 @@ func TestRunStrategy_ScriptUpgradeExecFailure(t *testing.T) {
 	}
 
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		return exec.Command("false")
+		return dummyFailCommand()
 	}
 
 	r := update.UpdateResult{
@@ -882,4 +897,142 @@ func TestRunStrategy_ScriptUpgradeExecFailure(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error when install.sh execution fails, got nil")
 	}
+}
+
+// --- TestInstallerUpgrade_Success ---
+
+func TestInstallerUpgrade_Success(t *testing.T) {
+	origExecCommand := execCommand
+	origHTTPClient := scriptHTTPClient
+	origGoos := runtime.GOOS
+	t.Cleanup(func() {
+		execCommand = origExecCommand
+		scriptHTTPClient = origHTTPClient
+	})
+
+	if origGoos != "windows" {
+		t.Skip("skipping Windows-only installer test on non-windows platform")
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Write-Output 'installer ok'\n"))
+	}))
+	defer server.Close()
+
+	scriptHTTPClient = server.Client()
+
+	execCalled := false
+	var gotArgs []string
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		execCalled = true
+		gotArgs = append(gotArgs, args...)
+		return dummyPassCommand("ok")
+	}
+
+	tool := update.ToolInfo{
+		Name:          "gentle-ai",
+		Owner:         "Gentleman-Programming",
+		Repo:          "gentle-ai",
+		InstallMethod: update.InstallInstaller,
+	}
+
+	// Change URL to use the local test server for the test.
+	// Since installerUpgrade constructs the URL directly, we mock the HTTP client and use a round tripper
+	// or we just trust the mock HTTP client will handle the request.
+	// Wait, installerUpgrade builds scriptURL := "https://raw.githubusercontent.com/...".
+	// The HTTP client needs to redirect this or respond directly.
+	// We'll create a custom RoundTripper so any URL returns our mock response.
+	scriptHTTPClient.Transport = roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		rec := httptest.NewRecorder()
+		rec.Header().Set("Content-Type", "text/plain")
+		rec.WriteHeader(http.StatusOK)
+		rec.WriteString("Write-Output 'installer ok'\n")
+		return rec.Result(), nil
+	})
+
+	exitReq, err := installerUpgrade(context.Background(), tool, "")
+	if err != nil {
+		t.Fatalf("installerUpgrade: unexpected error: %v", err)
+	}
+
+	if !exitReq {
+		t.Errorf("expected exitReq to be true on success")
+	}
+	if !execCalled {
+		t.Errorf("expected execCommand to be called")
+	}
+
+	// Check if the temp file path is passed
+	filePassed := false
+	for i, arg := range gotArgs {
+		if arg == "-File" && i+1 < len(gotArgs) {
+			if strings.Contains(gotArgs[i+1], "gentle-ai-install") {
+				filePassed = true
+			}
+		}
+	}
+	if !filePassed {
+		t.Errorf("expected -File argument with temp file path, got args: %v", gotArgs)
+	}
+}
+
+// --- TestInstallerUpgrade_DownloadFailure ---
+
+func TestInstallerUpgrade_DownloadFailure(t *testing.T) {
+	origHTTPClient := scriptHTTPClient
+	origGoos := runtime.GOOS
+	t.Cleanup(func() {
+		scriptHTTPClient = origHTTPClient
+	})
+
+	if origGoos != "windows" {
+		t.Skip("skipping Windows-only installer test on non-windows platform")
+	}
+
+	scriptHTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			rec := httptest.NewRecorder()
+			rec.WriteHeader(http.StatusNotFound)
+			return rec.Result(), nil
+		}),
+	}
+
+	tool := update.ToolInfo{
+		Name:          "gentle-ai",
+		Owner:         "Gentleman-Programming",
+		Repo:          "gentle-ai",
+		InstallMethod: update.InstallInstaller,
+	}
+
+	exitReq, err := installerUpgrade(context.Background(), tool, "")
+	if err == nil {
+		t.Errorf("expected error when installer download fails, got nil")
+	}
+	if exitReq {
+		t.Errorf("expected exitReq to be false on error")
+	}
+}
+
+// --- TestInstallerUpgrade_NonWindows ---
+
+func TestInstallerUpgrade_NonWindows(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping non-Windows test on Windows platform")
+	}
+	tool := update.ToolInfo{Name: "gentle-ai"}
+	exitReq, err := installerUpgrade(context.Background(), tool, "")
+	if err == nil {
+		t.Errorf("expected error when calling installerUpgrade on non-windows, got nil")
+	}
+	if exitReq {
+		t.Errorf("expected exitReq to be false")
+	}
+}
+
+type roundTripFunc func(req *http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
 }

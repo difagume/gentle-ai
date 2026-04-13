@@ -78,7 +78,7 @@ func TestExecute_DevBuildOnlyNoBackupCreated(t *testing.T) {
 	execCalled := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		execCalled = true
-		return exec.Command("echo", "should not be called")
+		return dummyPassCommand("should not be called")
 	}
 
 	results := []update.UpdateResult{
@@ -164,7 +164,7 @@ func TestExecute_BackupBeforeExecution(t *testing.T) {
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		calls = append(calls, name)
 		// Return a real passing command (echo) so exec succeeds.
-		return exec.Command("echo", "ok")
+		return dummyPassCommand("ok")
 	}
 
 	results := []update.UpdateResult{
@@ -196,7 +196,7 @@ func TestExecute_DryRunNeverExecs(t *testing.T) {
 	called := false
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		called = true
-		return exec.Command("echo", "should not run")
+		return dummyPassCommand("should not run")
 	}
 
 	results := []update.UpdateResult{
@@ -235,10 +235,10 @@ func TestExecute_PerToolSuccessAndFailure(t *testing.T) {
 		// engram go install succeeds, gga curl/download attempt fails — we simulate
 		// the failure by having execCommand return false for "gga" detection.
 		if name == "go" {
-			return exec.Command("echo", "go install ok")
+			return dummyPassCommand("go install ok")
 		}
 		// Any other exec attempt fails.
-		return exec.Command("false")
+		return dummyFailCommand()
 	}
 
 	results := []update.UpdateResult{
@@ -268,7 +268,7 @@ func TestExecute_DevBuildIsSkipped(t *testing.T) {
 	origExecCommand := execCommand
 	t.Cleanup(func() { execCommand = origExecCommand })
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		return exec.Command("echo", "ok")
+		return dummyPassCommand("ok")
 	}
 
 	results := []update.UpdateResult{
@@ -322,7 +322,7 @@ func TestExecute_FailureDoesNotImplyConfigLoss(t *testing.T) {
 
 	// Force all exec to fail.
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		return exec.Command("false")
+		return dummyFailCommand()
 	}
 
 	results := []update.UpdateResult{
@@ -364,7 +364,7 @@ func TestExecute_DevBuildSurfacedAsSkipped(t *testing.T) {
 	origExecCommand := execCommand
 	t.Cleanup(func() { execCommand = origExecCommand })
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		return exec.Command("echo", "ok")
+		return dummyPassCommand("ok")
 	}
 
 	results := []update.UpdateResult{
@@ -441,7 +441,7 @@ func TestExecute_ConfigNotMutatedDuringUpgrade(t *testing.T) {
 	t.Cleanup(func() { execCommand = origExecCommand })
 	execCommand = func(name string, args ...string) *exec.Cmd {
 		// Simulate a successful upgrade (no-op shell command).
-		return exec.Command("echo", "upgrade ok")
+		return dummyPassCommand("upgrade ok")
 	}
 
 	results := []update.UpdateResult{
@@ -569,7 +569,7 @@ func TestExecute_ForcedSnapshotFailureSurfacesWarningEndToEnd(t *testing.T) {
 
 	// Stub exec so the upgrade itself succeeds (we're only testing the backup path).
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		return exec.Command("echo", "upgrade ok")
+		return dummyPassCommand("upgrade ok")
 	}
 
 	// Force snapshot creation to fail.
@@ -632,7 +632,7 @@ func TestExecute_UpgradeBackupManifestHasUpgradeMetadata(t *testing.T) {
 		AppVersion = origAppVersion
 	})
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		return exec.Command("echo", "ok")
+		return dummyPassCommand("ok")
 	}
 	AppVersion = "3.0.0"
 
@@ -691,7 +691,7 @@ func TestExecute_SuccessfulSnapshotHasNoWarning(t *testing.T) {
 	origExecCommand := execCommand
 	t.Cleanup(func() { execCommand = origExecCommand })
 	execCommand = func(name string, args ...string) *exec.Cmd {
-		return exec.Command("echo", "ok")
+		return dummyPassCommand("ok")
 	}
 	// snapshotCreator is intentionally left at its real default.
 
